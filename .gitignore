@@ -1,0 +1,115 @@
+############################
+# PYTHON (Backend)
+############################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.eggs/
+*.log
+*.sqlite3
+.env
+venv/
+env/
+ENV/
+.venv/
+
+# Uploaded files
+uploads/
+tmp/
+tmp_uploads/
+
+# Google Credentials
+*.json
+keys/
+backend/keys/
+backend/*.json
+backend/keys/*.json
+
+# FastAPI cache
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/.coverage
+
+############################
+# NODE / REACT (Frontend)
+############################
+node_modules/
+dist/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vite cache
+frontend/**/node_modules/
+frontend/**/dist/
+frontend/**/.vite/
+
+############################
+# OS SPECIFIC
+############################
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+############################
+# JETBRAINS / PYCHARM
+############################
+.idea/
+*.iml
+
+############################
+# VISUAL STUDIO CODE
+############################
+.vscode/
+.history/
+
+############################
+# LOGS & TEMP FILES
+############################
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+
+############################
+# ENVIRONMENT + SECRETS
+############################
+*.env
+.env
+.env*
+backend/.env
+frontend/.env
+secrets/
+secret/
+credentials/
+*.pem
+*.key
+
+############################
+# BACKEND BUILD ARTIFACTS
+############################
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/.coverage
+backend/.uvicorn/
+backend/.cache/
+
+############################
+# FRONTEND BUILD ARTIFACTS
+############################
+frontend/**/node_modules/
+frontend/**/dist/
+frontend/**/build/
