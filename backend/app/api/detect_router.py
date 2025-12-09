@@ -1,42 +1,35 @@
 from fastapi import APIRouter, HTTPException
-import os
-from app.services.file_service import FileService
-from app.detectors.document_classifier import DocumentClassifier
+from pydantic import BaseModel
 
-router = APIRouter()
-file_service = FileService()
+from app.services.document_service import DocumentService
+from app.detectors.document_classifier import DocumentClassifier
+from app.models.detect_response import DetectResponse
+
+router = APIRouter(prefix="/api", tags=["Document Detection"])
+
+document_service = DocumentService()
 classifier = DocumentClassifier()
 
 
-@router.post("/detect")
-def detect_document(payload: dict):
-    file_id = payload.get("file_id")
+@router.post("/detect", response_model=DetectResponse)
+async def detect_document(file_id: str):
+    """
+    Detect the document type using the rule-based classifier.
+    """
 
-    if not file_id:
-        raise HTTPException(status_code=400, detail="file_id is required")
+    # Load text from the stored OCR result or raw file
+    text = document_service.get_text(file_id)
+    if not text:
+        raise HTTPException(status_code=400, detail="No text found for this file_id")
 
-    # Load file text
-    file_path = file_service.get_file_path(file_id)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
+    # Classification
+    try:
+        doc_type, confidence = classifier.classify(text)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Classification failed: {str(e)}")
 
-    text = file_service.read_text(file_path)
-
-    # Run classifier
-    result = classifier.classify(text)
-
-    doc_type = result["type"]
-    confidence = result["confidence"]
-    alternatives = result.get("alternatives", [])
-
-    response = {
-        "document_type": doc_type,
-        "confidence": confidence,
-        "alternatives": alternatives,
-        "warning": None
-    }
-
-    if confidence < 0.60:
-        response["warning"] = "Low confidence — document type may be incorrect."
-
-    return response
+    return DetectResponse(
+        file_id=file_id,
+        document_type=doc_type,
+        confidence=confidence,
+    )

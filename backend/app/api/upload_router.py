@@ -1,32 +1,26 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from uuid import uuid4
-from app.services.file_service import FileService
+# app/api/upload_router.py
 
-router = APIRouter()
-file_service = FileService()
+from fastapi import APIRouter, UploadFile, File
+import uuid
+import os
 
-@router.post("/")
-async def upload_document(file: UploadFile = File(...)):
+from app.models.upload_response import UploadResponse
 
-    # Read file bytes
-    file_bytes = await file.read()
+router = APIRouter(prefix="/api", tags=["Upload"])
 
-    # Generate unique ID
-    file_id = str(uuid4())
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-    # Get original extension
-    if "." in file.filename:
-        ext = file.filename.split(".")[-1]
-    else:
-        ext = "bin"
 
-    saved_name = f"{file_id}.{ext}"
+@router.post("/upload", response_model=UploadResponse)
+async def upload_file(file: UploadFile = File(...)):
+    file_id = str(uuid.uuid4())
+    file_path = os.path.join(UPLOAD_DIR, file_id)
 
-    # Save file
-    file_path = file_service.save_file(file_bytes, saved_name)
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
 
-    return {
-        "file_id": file_id,
-        "filename": saved_name,
-        "path": file_path
-    }
+    return UploadResponse(
+        file_id=file_id,
+        filename=file.filename
+    )
