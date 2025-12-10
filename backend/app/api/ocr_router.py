@@ -1,29 +1,26 @@
 from fastapi import APIRouter, HTTPException
-from app.services.ocr_service import OCRService
-from app.services.file_service import FileService
-import os
-router = APIRouter()
-ocr = OCRService()
-file_service = FileService()
+from app.services.ocr_service import ocr_service
+from app.services.document_service import document_service
+from app.models.ocr_response import OCRResponse
 
-@router.get("/ocr/{file_id}")
-def run_ocr(file_id: str):
+router = APIRouter(prefix="/api/ocr", tags=["OCR"])
 
-    # Find file path from uploads directory
-    upload_dir = "uploads"
-    for filename in os.listdir(upload_dir):
-        if filename.startswith(file_id):
-            file_path = f"{upload_dir}/{filename}"
-            break
-    else:
-        raise HTTPException(404, "File not found")
+@router.post("/{file_id}", response_model=OCRResponse)
+async def perform_ocr(file_id: str):
 
-    # Run OCR
-    result = ocr.extract_text(file_path)
+    try:
+        raw_bytes = document_service.read_file_bytes(file_id)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
-    return {
-        "file_id": file_id,
-        "text": result["text"],
-        "entities": result["entities"],
-        "pages": result["pages"]
-    }
+    try:
+        text = ocr_service.extract_text(raw_bytes)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Document AI OCR failed: {str(e)}"
+        )
+
+    document_service.save_text(file_id, text)
+
+    return OCRResponse(file_id=file_id, text=text)

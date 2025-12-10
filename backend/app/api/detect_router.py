@@ -1,42 +1,23 @@
-from fastapi import APIRouter, HTTPException
-import os
-from app.services.file_service import FileService
-from app.detectors.document_classifier import DocumentClassifier
+# app/api/detect_router.py
 
-router = APIRouter()
-file_service = FileService()
-classifier = DocumentClassifier()
+from fastapi import APIRouter, Query, HTTPException
+from app.services.document_service import document_service
+from app.llm.gemini_client import GeminiClient
 
+router = APIRouter(prefix="/api", tags=["Document Detection"])
+gemini = GeminiClient()
 
 @router.post("/detect")
-def detect_document(payload: dict):
-    file_id = payload.get("file_id")
+async def detect_document(file_id: str = Query(...)):
+    text = document_service.get_text(file_id)
 
-    if not file_id:
-        raise HTTPException(status_code=400, detail="file_id is required")
+    if not text:
+        raise HTTPException(status_code=400, detail="OCR missing. Run /api/ocr first.")
 
-    # Load file text
-    file_path = file_service.get_file_path(file_id)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
+    result = gemini.classify_document(text)
 
-    text = file_service.read_text(file_path)
-
-    # Run classifier
-    result = classifier.classify(text)
-
-    doc_type = result["type"]
-    confidence = result["confidence"]
-    alternatives = result.get("alternatives", [])
-
-    response = {
-        "document_type": doc_type,
-        "confidence": confidence,
-        "alternatives": alternatives,
-        "warning": None
+    return {
+        "file_id": file_id,
+        "document_type": result.get("document_type", "unknown"),
+        "confidence": result.get("confidence", 0.0),
     }
-
-    if confidence < 0.60:
-        response["warning"] = "Low confidence — document type may be incorrect."
-
-    return response

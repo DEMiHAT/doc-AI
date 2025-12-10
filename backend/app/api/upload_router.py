@@ -1,32 +1,17 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from uuid import uuid4
-from app.services.file_service import FileService
+from fastapi import APIRouter, UploadFile, File
+from app.services.document_service import document_service
 
-router = APIRouter()
-file_service = FileService()
+router = APIRouter(prefix="/api/upload", tags=["Upload"])
 
-@router.post("/")
-async def upload_document(file: UploadFile = File(...)):
-
-    # Read file bytes
+@router.post("")
+async def upload(file: UploadFile = File(...)):
+    # Read raw bytes
     file_bytes = await file.read()
 
-    # Generate unique ID
-    file_id = str(uuid4())
-
-    # Get original extension
-    if "." in file.filename:
-        ext = file.filename.split(".")[-1]
-    else:
-        ext = "bin"
-
-    saved_name = f"{file_id}.{ext}"
-
-    # Save file
-    file_path = file_service.save_file(file_bytes, saved_name)
+    # Save raw bytes into service
+    file_id = document_service.save_file(file_bytes)
 
     return {
         "file_id": file_id,
-        "filename": saved_name,
-        "path": file_path
+        "filename": file.filename
     }
