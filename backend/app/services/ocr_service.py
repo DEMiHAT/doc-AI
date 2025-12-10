@@ -1,98 +1,58 @@
-# app/services/ocr_service.py
-
 import os
-from typing import Optional
-
-from google.cloud import documentai_v1 as documentai
-from google.oauth2 import service_account
 from dotenv import load_dotenv
+from google.cloud import documentai_v1 as documentai
 
 load_dotenv()
 
-
 class OCRService:
     def __init__(self):
-        # 1. Load env vars
-        credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-        project_id = os.getenv("PROJECT_ID")
-        location = os.getenv("LOCATION_ID", "us")
-        processor_id = os.getenv("PROCESSOR_ID")
+        # Load environment variables
+        self.project_id = os.getenv("GCP_PROJECT_ID")
+        self.location = os.getenv("GCP_LOCATION")
+        self.processor_id = os.getenv("GCP_PROCESSOR_ID")
 
-        missing = []
-        if not credentials_path:
-            missing.append("GOOGLE_APPLICATION_CREDENTIALS")
-        if not project_id:
-            missing.append("PROJECT_ID")
-        if not processor_id:
-            missing.append("PROCESSOR_ID")
+        print(f"[OCR DEBUG] PROJECT = {self.project_id}")
+        print(f"[OCR DEBUG] LOCATION = {self.location}")
+        print(f"[OCR DEBUG] PROCESSOR = {self.processor_id}")
 
-        if missing:
-            raise RuntimeError(
-                f"Missing required environment variables: {', '.join(missing)}"
-            )
+        if not self.project_id or not self.processor_id:
+            raise RuntimeError("Missing GCP_PROJECT_ID or GCP_PROCESSOR_ID")
 
-        if not os.path.exists(credentials_path):
-            raise FileNotFoundError(
-                f"Google DocumentAI credentials not found at: {credentials_path}"
-            )
+        self.client = documentai.DocumentProcessorServiceClient()
 
-        # 2. Create client
-        credentials = service_account.Credentials.from_service_account_file(
-            credentials_path
+        self.processor_path = self.client.processor_path(
+            self.project_id, self.location, self.processor_id
         )
 
-        self.client = documentai.DocumentProcessorServiceClient(
-            credentials=credentials
-        )
-
-        self.name = self.client.processor_path(project_id, location, processor_id)
-
-        # 3. Uploads dir
-        self.uploads_dir = os.path.join(os.getcwd(), "uploads")
-
-        print(f"[OCRService] Initialized with processor: {self.name}")
-
-    # ----------------------------------------------------------
-    # OCR
-    # ----------------------------------------------------------
-    def perform_ocr(self, file_id: str) -> dict:
+    # ✨ NEW — The function your router expects
+    def extract_text(self, file_bytes: bytes) -> str:
         """
-        Perform OCR on uploaded file and return {"text": "..."}.
-        Assumes PDFs for now (application/pdf).
+        Sends a document to Google Document AI and returns extracted text.
         """
-
-        file_path = os.path.join(self.uploads_dir, file_id)
-
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"File not found in uploads/: {file_id}")
-
-        with open(file_path, "rb") as f:
-            file_bytes = f.read()
-
-        raw_document = documentai.RawDocument(
-            content=file_bytes,
-            mime_type=self._guess_mime(file_path),
-        )
-
-        request = documentai.ProcessRequest(
-            name=self.name,
-            raw_document=raw_document,
-        )
 
         try:
+            raw_document = documentai.RawDocument(
+                content=file_bytes,
+                mime_type="application/pdf"
+            )
+
+            request = documentai.ProcessRequest(
+                name=self.processor_path,
+                raw_document=raw_document
+            )
+
             result = self.client.process_document(request=request)
+            document = result.document
+
+            text = document.text if document.text else ""
+
+            print("[OCR DEBUG] Extracted text:")
+            print(text[:500])
+
+            return text
+
         except Exception as e:
             raise RuntimeError(f"Document AI OCR failed: {e}")
 
-        document = result.document
-        ocr_text = document.text if document and document.text else ""
-
-        return {"text": ocr_text}
-
-    def _guess_mime(self, file_path: str) -> str:
-        """
-        For now, assume PDFs. This avoids 'Unsupported mime type' when
-        files are saved without an extension (uploads/<uuid>).
-        Later we can improve this by saving the original extension.
-        """
-        return "application/pdf"
+# Export singleton
+ocr_service = OCRService()

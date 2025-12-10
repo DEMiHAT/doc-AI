@@ -1,0 +1,179 @@
+Comparative Report: Cloud
+OCR vs Local OCR (Tesseract
+for Invoice NLP System
+)
+1. Introduction
+This report analyzes the operational, technical, and financial impact of choosing
+Cloud OCR (e.g., Google Document Al, Amazon Textract) versus Local OCR
+(Tesseract) for the invoice extraction module of our NLP-driven ERP plugin.
+The goal is to determine which OCR strategy provides the best balance of cost,
+accuracy, scalability, data security, and maintenance overhead, based on
+expected usage volume and system architecture.
+2. Summary Comparison Table
+Criteria
+Cloud OCR (e.g., Google DocAl/
+Textract)
+Local OCR (Tesseract)
+Upfront cost
+None
+Server cost (3,000-10,000/month)
+Per-page cost
+Pay-per-page
+Free/unlimited
+Low-Medium (~60-85% depending
+on quality)
+Accuracy
+Very high (~95-99% for invoices)
+Table
+extraction
+Built-in, highly accurate
+Requires custom logic + ML
+Scalability
+Infinite (auto scaling)
+Tied to server CPU/RAM
+Latency
+Network overhead
+Local faster
+Security
+Requires data upload to cloud
+Fully on-prem, safe
+Maintenance
+Zero
+Manual updates, OCR tuning
+Best for
+Enterprises, unpredictable
+formats
+High-volume predictable formats
+Comparative Report: Cloud OCR vs Local OCR (Tesseract) for Invoice NLP System
+3. Cloud OCR (
+Analysis
+Document Al / Textract) –
+3.1. Pricing
+Cloud OCR pricing follows a usage-based model:
+●
+Typical: $1.50 per 1,000 pages for basic text extraction
+Table/Forms extraction cost is higher
+High-volume discounts available
+Cloud OCR is cheaper at low/moderate volume but scales linearly with usage.
+3.2. Advantages
+1. High Accuracy
+Cloud OCR models are trained on millions of documents:
+•
+Excellent table detection
+• Perfect for multi-format invoices
+• Handles skewed, noisy, or low-quality scans
+2. Almost No Maintenance
+All optimizations, model updates, and scaling are handled by the provider.
+3. Faster Time-to-Market
+No need to build preprocessing, deskewing, or table-recognition models.
+4. Guaranteed Scalability
+Can handle 100 requests or 1 million requests without infrastructure changes.
+3.3. Disadvantages
+Recurring cost increases with volume
+Comparative Report: Cloud OCR vs Local OCR (Tesseract) for Invoice NLP System
+2
+At scale (e.g., 100k invoices/month), monthly costs can grow significantly.
+Data privacy concerns
+Invoices must be sent to an external cloud.
+Network latency
+Each file upload + processing + response adds ~200-600 ms.
+4. Local OCR (Tesseract)-Analysis
+4.1. Pricing
+Tesseract is free, but requires compute resources:
+• A single 2-4 CPU server: 3,000-10,000/month
+Can process thousands of pages/month
+Effectively zero per-page fee
+Ideal for long-term cost savings at scale.
+4.2. Advantages
+1. Zero Per-Page Cost
+Costs do not increase with usage.
+2. Complete Data Control
+No upload to external services → safer for:
+•
+invoices, supplier data
+• finance records
+• PII data
+3. Fast local processing
+No network overhead, low latency.
+Comparative Report: Cloud OCR vs Local OCR (Tesseract) for Invoice NLP System
+3
+4.3. Disadvantages
+Lower Accuracy
+Especially poor at:
+• tables
+multi-line text
+low-quality scans
+●
+variable invoice formats
+No native table extraction
+Requires heavy custom logic:
+• column detection
+bounding-box grouping
+ML-assisted table parsing
+row segmentation
+High Engineering Effort
+Setting up:
+preprocessing
+•
+resizing
+• thresholding
+• skew correction
+noise reduction
+requires expertise.
+Scaling requires more servers
+More invoices: = more CPU/RAM → higher server bills.
+Comparative Report: Cloud OCR vs Local OCR (Tesseract) for Invoice NLP System
+4
+5. Cost Example (INR)
+Volume
+Cloud OCR (DocAl/Textract) Local OCR (Server Cost)
+1,000 invoices/month
+~125
+~3,000 (same server)
+10,000 invoices/month
+~1,250
+~3,000
+100,000 invoices/month
+~12,500
+~10,000 (extra servers)
+1,000,000 invoices/month 125,000+
+~20,000-30,000
+Observation
+Cloud OCR is cheaper at low volume,
+Local OCR is cheaper at high volume.
+6. Recommendation for Our Project
+Phase 1 (MVP / Pilot): Cloud OCR
+Why?
+Highest accuracy → best user experience
+• Zero maintenance
+• Faster development
+• Works across all invoice types
+Phase 2 (Scaling): Hybrid OCR Model
+Use:
+• Cloud OCR for complex invoices
+• Tesseract for clean/simple invoices
+Configurable by client reduces cost
+Phase 3 (Large-Scale Deployment): Local OCR Engine
+If invoice volume becomes very high (50k-500k/month), build a robust:
+Comparative Report: Cloud OCR vs Local OCR (Tesseract) for Invoice NLP System
+5
+preprocessing pipeline
+• 
+table 
+detection 
+model
+layout analysis model
+This shifts the system to a low-cost, high-volume solution.
+7. Conclusion
+Cloud OCR → High accuracy, high convenience, scalable,
+recurring cost
+Local OCR → Low cost, highly customizable, more
+maintenance, lower accuracy
+For the current ERP plugin project where accuracy and rapid development matter
+most:
+Start with Cloud OCR (Google Document Al)
+Add Tesseract as a fallback or cost-optimization option
+Design OCR as a pluggable module so client can switch engines
+This provides the best balance of accuracy, cost-control, speed, and flexibility.
+Comparative Report: Cloud OCR vs Local OCR (Tesseract) for Invoice NLP System
+6
