@@ -1,26 +1,17 @@
-# app/api/upload_router.py
-
 from fastapi import APIRouter, UploadFile, File
-import uuid
-import os
+from app.services.document_service import document_service
 
-from app.models.upload_response import UploadResponse
+router = APIRouter(prefix="/api/upload", tags=["Upload"])
 
-router = APIRouter(prefix="/api", tags=["Upload"])
+@router.post("")
+async def upload(file: UploadFile = File(...)):
+    # Read raw bytes
+    file_bytes = await file.read()
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+    # Save raw bytes into service
+    file_id = document_service.save_file(file_bytes)
 
-
-@router.post("/upload", response_model=UploadResponse)
-async def upload_file(file: UploadFile = File(...)):
-    file_id = str(uuid.uuid4())
-    file_path = os.path.join(UPLOAD_DIR, file_id)
-
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
-
-    return UploadResponse(
-        file_id=file_id,
-        filename=file.filename
-    )
+    return {
+        "file_id": file_id,
+        "filename": file.filename
+    }
